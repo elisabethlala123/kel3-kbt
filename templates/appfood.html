@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruits🍍-Vegetable🍅 Classification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .info {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .success {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .warning {
+            background-color: #ff9800;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fruits🍍-Vegetable🍅 Classification</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="foodImage" accept="image/*" style="margin-bottom: 10px;">
+            <br>
+            <button type="button" onclick="predictCalories()" class="button">Predict</button>
+        </form>
+        <div id="result" style="display: none;">
+            <h2>Result</h2>
+            <p id="category" class="info"></p>
+            <p id="prediction" class="success"></p>
+            <p id="calories" class="warning"></p>
+            <img id="foodPreview" src="#" alt="Preview" style="margin-top: 20px;">
+        </div>
+    </div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script>
+        let model;
+
+        async function loadModel() {
+            model = await tf.loadLayersModel('model/CalorieFood.h5');
+        }
+
+        async function predictCalories() {
+            await loadModel();
+
+            const inputElement = document.getElementById('foodImage');
+            const file = inputElement.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = async function() {
+                        const tensor = tf.browser.fromPixels(img).resizeNearestNeighbor([224, 224]).toFloat().expandDims();
+                        const prediction = await model.predict(tensor).data();
+                        const classIndex = prediction.indexOf(Math.max(...prediction));
+                        const className = getClassLabel(classIndex); // Function to get class name
+                        document.getElementById('result').style.display = 'block';
+                        document.getElementById('category').innerHTML = 'Category: ' + getFoodCategory(className);
+                        document.getElementById('prediction').innerHTML = 'Predicted: ' + className;
+                        document.getElementById('calories').innerHTML = 'Calories: ' + fetchCalories(className); // Function to fetch calories
+                    };
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select an image.');
+            }
+        }
+
+        function getClassLabel(index) {
+            const labels = ['apple', 'banana', 'beetroot', 'bell pepper', 'cabbage', 'capsicum', 'carrot',
+                            'cauliflower', 'chilli pepper', 'corn', 'cucumber', 'eggplant', 'garlic', 'ginger',
+                            'grapes', 'jalepeno', 'kiwi', 'lemon', 'lettuce', 'mango', 'onion', 'orange', 'paprika',
+                            'pear', 'peas', 'pineapple', 'pomegranate', 'potato', 'raddish', 'soy beans', 'spinach',
+                            'sweetcorn', 'sweetpotato', 'tomato', 'turnip', 'watermelon'];
+            return labels[index];
+        }
+
+        function getFoodCategory(className) {
+            const fruits = ['apple', 'banana', 'grapes', 'kiwi', 'lemon', 'mango', 'orange', 'paprika',
+                            'pear', 'pineapple', 'pomegranate', 'watermelon'];
+            if (fruits.includes(className)) {
+                return 'Fruit';
+            } else {
+                return 'Vegetable';
+            }
+        }
+
+        function fetchCalories(foodName) {
+            // Implement your function to fetch calories from a source based on foodName
+            // Example: You can fetch from an API or calculate based on a predefined dataset
+            return 'To be implemented'; // Replace with actual calories
+        }
+    </script>
+</body>
+</html>
